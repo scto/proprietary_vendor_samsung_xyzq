@@ -13,18 +13,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - model: "SM-G9810"
-            region: "CHC"
-          - model: "SM-G9860"
-            region: "CHC"
-          - model: "SM-G9880"
-            region: "CHC"
-          - model: "SM-G981N"
-            region: "KOO"
-          - model: "SM-G986N"
-            region: "KOO"
-          - model: "SM-G988N"
-            region: "KOO"
+          - model: "SM-G981B"
+            region: "SWC"
+          - model: "SM-G986B"
+            region: "SWC"
+          - model: "SM-G988B"
+            region: "SWC"
+          - model: "SM-G981B"
+            region: "SWC"
+          - model: "SM-G986B"
+            region: "SWC"
+          - model: "SM-G988B"
+            region: "SWC"
 
     steps:
       - name: Checkout repo
@@ -48,22 +48,19 @@ jobs:
           echo ::set-output name=latest_modemversion::$latest_modem
           echo ::set-output name=need_update::$need_update
 
-      - name: Use Node.js 15
-        if: steps.check.outputs.need_update == 1
-        uses: actions/setup-node@v1
-        with:
-          node-version: 15
-
       - name: Install dependencies
         if: steps.check.outputs.need_update == 1
         run: |
           sudo apt-get update
           sudo apt-get install -y simg2img liblz4-tool
-          sudo npm i -g samfirm
+          wget https://github.com/jesec/SamFirm.NET/releases/latest/download/linux-x64 -O samfirm
+          chmod +x samfirm
 
       - name: Fetch firmware
         if: steps.check.outputs.need_update == 1
-        run: samfirm -m ${{ matrix.model }} -r ${{ matrix.region }}
+        run: |
+          ./samfirm -m ${{ matrix.model }} -r ${{ matrix.region }}
+          rm samfirm
 
       - name: Print directory structure
         if: steps.check.outputs.need_update == 1
@@ -126,7 +123,7 @@ jobs:
           simg2img /super.img super.raw.img
           sudo rm /super.img
 
-      - name: Extract vendor and odm image from super
+      - name: Extract vendor and odm and system image from super
         if: steps.check.outputs.need_update == 1
         run: |
           tools/bin/lpunpack --partition=vendor --partition=odm super.raw.img
